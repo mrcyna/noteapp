@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noteapp-deployment
+  labels:
+    app: noteapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: noteapp
+  template:
+    metadata:
+      labels:
+        app: noteapp
+    spec:
+      containers:
+      - name: noteapp
+        image: mrcyna/noteapp:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: APP_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: noteapp-config
+              key: app-port
+        - name: APP_STORAGE
+          valueFrom:
+            configMapKeyRef:
+              name: noteapp-config
+              key: app-storage
+        - name: MONGODB_DBNAME
+          valueFrom:
+            configMapKeyRef:
+              name: noteapp-config
+              key: mongodb-dbname
+        - name: MONGODB_URL
+          valueFrom:
+            secretKeyRef:
+              name: noteapp-secret
+              key: mongodb-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: noteapp-service
+spec:
+  type: NodePort
+  selector:
+    app: noteapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30200
